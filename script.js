@@ -949,9 +949,9 @@ function render() {
       h += '<td>' + seqNum + '</td><td class="loc-cell">' + it.location + '</td><td class="eq-cell" style="text-align:left">' + it.equipment + '</td><td><span class="freq-badge freq-' + freq + '">' + (freqLabel[freq] || freq) + '</span></td>';
     }
 
-    // 주차 Column
+    // 시기(Timing) Column
     var weekVal = r.weekLabel || it.weekLabel || '';
-    h += '<td><input class="inp week-inp" ' + (editing ? '' : 'disabled') + ' value="' + esc(weekVal) + '" placeholder="주차" data-field="weekLabel"></td>';
+    h += '<td><input class="inp week-inp" ' + (editing ? '' : 'disabled') + ' value="' + esc(weekVal) + '" placeholder="시기" data-field="weekLabel"></td>';
 
     // Criteria Column (Master criteria should take precedence)
     var critVal = it.criteria || '';
