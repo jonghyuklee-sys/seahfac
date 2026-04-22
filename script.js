@@ -10,6 +10,7 @@ var editing = false;
 var curPeriod = isRefresh ? (localStorage.getItem('seah_curPeriod') || 'D') : 'D';
 var curObsLine = isRefresh ? (localStorage.getItem('seah_curObsLine') || 'ALL') : 'ALL';
 var curObsPage = 1;
+var curMainPage = 1;
 var saved = JSON.parse(localStorage.getItem('seah_insp') || '{}');
 var customItems = JSON.parse(localStorage.getItem('seah_custom') || '{}');
 var metaOverrides = JSON.parse(localStorage.getItem('seah_meta') || '{}');
@@ -70,6 +71,7 @@ function init() {
     curDate = e.target.value;
     localStorage.setItem('seah_curDate', curDate);
     curObsPage = 1;
+    curMainPage = 1;
     fetchWeekData(); // Fetch new week data if date changes
     render();
   });
@@ -239,6 +241,7 @@ function setPart(p) {
   document.getElementById('ddPart').classList.remove('open');
   curLoc = 'ALL'; localStorage.setItem('seah_curLoc', 'ALL');
   curFreq = 'ALL'; localStorage.setItem('seah_curFreq', 'ALL');
+  curMainPage = 1;
   editing = false; updateEditUI(); buildLocDropdown(); buildFreqDropdown(); render();
 }
 
@@ -263,6 +266,7 @@ function buildLocDropdown() {
 function setLoc(lc) {
   curLoc = lc;
   localStorage.setItem('seah_curLoc', lc);
+  curMainPage = 1;
   updateLocBtnLabel();
   buildLocDropdown();
   render();
@@ -296,6 +300,7 @@ function buildFreqDropdown() {
 function setFreq(f) {
   curFreq = f;
   localStorage.setItem('seah_curFreq', f);
+  curMainPage = 1;
   updateFreqBtnLabel();
   buildFreqDropdown();
   render();
@@ -387,7 +392,7 @@ function goLine(line, keepFilters) {
   document.getElementById('pageTitle').textContent = title;
 
   if (!keepFilters) {
-    curLoc = 'ALL'; curFreq = 'ALL'; curObsLine = 'ALL'; curObsPage = 1;
+    curLoc = 'ALL'; curFreq = 'ALL'; curObsLine = 'ALL'; curObsPage = 1; curMainPage = 1;
     localStorage.setItem('seah_curLoc', 'ALL');
     localStorage.setItem('seah_curFreq', 'ALL');
     localStorage.setItem('seah_curObsLine', 'ALL');
@@ -433,6 +438,11 @@ function fetchWeekData() {
 
 function changeObsPage(dir) {
   curObsPage += dir;
+  render();
+}
+
+function changeMainPage(dir) {
+  curMainPage += dir;
   render();
 }
 
@@ -892,14 +902,21 @@ function render() {
   document.getElementById('statPending').textContent = items.length - done;
   document.getElementById('progBarFill').style.width = (items.length > 0 ? (done / items.length * 100) : 0) + '%';
 
+  // Pagination for main table
+  var totalItems = items.length;
+  var totalPages = Math.ceil(totalItems / 10) || 1;
+  if (curMainPage > totalPages) curMainPage = totalPages;
+  var pagedItems = items.slice((curMainPage - 1) * 10, curMainPage * 10);
+
   var h = '', freqLabel = { 'D': '일', 'W': '주', 'M': '월' };
-  for (var i = 0; i < items.length; i++) {
-    var it = items[i], origIdx = it.baseIndex, r = mergedRows[origIdx] || {}, freq = it.frequency || 'D';
+  for (var i = 0; i < pagedItems.length; i++) {
+    var it = pagedItems[i], origIdx = it.baseIndex, r = mergedRows[origIdx] || {}, freq = it.frequency || 'D';
+    var seqNum = (curMainPage - 1) * 10 + (i + 1);
     h += '<tr data-idx="' + origIdx + '">';
     if (editing) {
-      h += '<td>' + (i + 1) + '</td><td><input class="edit-inp" data-field="location" value="' + esc(it.location) + '"></td><td><input class="edit-inp" data-field="equipment" value="' + esc(it.equipment) + '"></td><td><select class="edit-sel" data-field="frequency"><option value="D"' + (freq === 'D' ? ' selected' : '') + '>일</option><option value="W"' + (freq === 'W' ? ' selected' : '') + '>주</option><option value="M"' + (freq === 'M' ? ' selected' : '') + '>월</option></select></td>';
+      h += '<td>' + seqNum + '</td><td><input class="edit-inp" data-field="location" value="' + esc(it.location) + '"></td><td><input class="edit-inp" data-field="equipment" value="' + esc(it.equipment) + '"></td><td><select class="edit-sel" data-field="frequency"><option value="D"' + (freq === 'D' ? ' selected' : '') + '>일</option><option value="W"' + (freq === 'W' ? ' selected' : '') + '>주</option><option value="M"' + (freq === 'M' ? ' selected' : '') + '>월</option></select></td>';
     } else {
-      h += '<td>' + (i + 1) + '</td><td class="loc-cell">' + it.location + '</td><td class="eq-cell" style="text-align:left">' + it.equipment + '</td><td><span class="freq-badge freq-' + freq + '">' + (freqLabel[freq] || freq) + '</span></td>';
+      h += '<td>' + seqNum + '</td><td class="loc-cell">' + it.location + '</td><td class="eq-cell" style="text-align:left">' + it.equipment + '</td><td><span class="freq-badge freq-' + freq + '">' + (freqLabel[freq] || freq) + '</span></td>';
     }
 
     // 주차 Column
@@ -1002,6 +1019,23 @@ function render() {
     var fSel = tr.querySelector('.edit-sel');
     if (fSel) fSel.onchange = updateRowColors;
   });
+
+  // Add Pagination UI for main table
+  var pagHtml = '';
+  if (totalPages > 1) {
+    pagHtml += '<div class="pagination" style="display:flex; align-items:center; justify-content:center; gap:1rem; padding:1rem; border-top:1px solid var(--border); background:#fcfcfc">';
+    pagHtml += '<button class="btn" ' + (curMainPage <= 1 ? 'disabled style="opacity:0.5; cursor:default"' : 'onclick="changeMainPage(-1)"') + '>이전</button>';
+    pagHtml += '<span style="font-weight:700; color:var(--text-main); font-size:0.9rem">' + curMainPage + ' / ' + totalPages + '</span>';
+    pagHtml += '<button class="btn" ' + (curMainPage >= totalPages ? 'disabled style="opacity:0.5; cursor:default"' : 'onclick="changeMainPage(1)"') + '>다음</button>';
+    pagHtml += '</div>';
+  }
+  var existingPag = document.getElementById('mainPagination');
+  if (existingPag) existingPag.remove();
+  var pDiv = document.createElement('div');
+  pDiv.id = 'mainPagination';
+  pDiv.innerHTML = pagHtml;
+  scrollArea.appendChild(pDiv);
+
   scrollArea.scrollTop = 0;
 }
 
