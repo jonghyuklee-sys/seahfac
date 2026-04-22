@@ -959,9 +959,9 @@ function render() {
 
     var days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
 
-    // 주/월 단위 점검 항목의 경우, 이번 주 내에 완료된 날짜가 있는지 확인
+    // 주/월 단위 점검 항목 또는 '시기'가 입력된 항목의 경우, 이번 주 내에 완료된 날짜가 있는지 확인
     var compInfo = null;
-    if (freq === 'W' || freq === 'M') {
+    if (freq === 'W' || freq === 'M' || weekVal) {
       for (var d = 0; d < 7; d++) {
         if (r[days[d]]) {
           compInfo = { dateLabel: weekDateLabels[d], val: r[days[d]] };
