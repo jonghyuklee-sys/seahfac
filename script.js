@@ -40,6 +40,12 @@ var curPhotoIdx = null;
 var curPhotoDay = null;
 var curViewerIdx = 0;
 
+function getWeekOfMonth(dateStr) {
+  var d = new Date(dateStr + 'T00:00:00');
+  var date = d.getDate();
+  return Math.floor((date - 1) / 7) + 1;
+}
+
 function getBaseItems(line, part) {
   if (part === 'mechanical') return (DATA[line] || []);
   return (DATA_ELEC[line] || []);
@@ -916,9 +922,9 @@ function render() {
     }
   }
 
-  var done = 0;
   var d_today = new Date(curDate + 'T00:00:00');
   var tDayKey = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d_today.getDay()];
+  var curWeekNum = getWeekOfMonth(curDate);
 
   for (var i = 0; i < items.length; i++) {
     var idx = allItems.indexOf(items[i]);
@@ -1160,6 +1166,14 @@ function deleteItem(origIdx) {
   custom.splice(customIdx, 1);
   customItems[ckey] = custom;
 
+  // 인덱스가 변경되었으므로 메모리에 저장된 모든 시점의 점검 데이터도 인덱스를 밀어줍니다.
+  for (var k in saved) {
+    if (saved[k].rows) {
+      saved[k].rows.splice(origIdx, 1);
+    }
+  }
+
+  localStorage.setItem('seah_insp', JSON.stringify(saved));
   localStorage.setItem('seah_custom', JSON.stringify(customItems));
   db.collection('settings').doc('customItems').set(customItems).catch(e => { });
   buildLocDropdown(); render();
