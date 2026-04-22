@@ -159,6 +159,7 @@ function init() {
   });
 
   setupDropdowns();
+  updatePartBtnLabel();
   buildPartDropdown();
   buildLocDropdown();
   buildFreqDropdown();
@@ -260,13 +261,18 @@ function buildPartDropdown() {
 function setPart(p) {
   curPart = p;
   localStorage.setItem('seah_curPart', p);
-  var label = curPart === 'mechanical' ? '기계' : '전기';
-  document.getElementById('btnPart').innerHTML = '파트: ' + label + ' <span class="arrow">▼</span>';
+  updatePartBtnLabel();
   document.getElementById('ddPart').classList.remove('open');
   curLoc = 'ALL'; localStorage.setItem('seah_curLoc', 'ALL');
   curFreq = 'ALL'; localStorage.setItem('seah_curFreq', 'ALL');
   curMainPage = 1;
   editing = false; updateEditUI(); buildLocDropdown(); buildFreqDropdown(); render();
+}
+
+function updatePartBtnLabel() {
+  var label = curPart === 'mechanical' ? '기계' : '전기';
+  var btn = document.getElementById('btnPart');
+  if (btn) btn.innerHTML = '파트: ' + label + ' <span class="arrow">▼</span>';
 }
 
 function buildLocDropdown() {
