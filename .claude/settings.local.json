@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/SEAH/Downloads/**)",
+      "Bash(python -c ' *)",
+      "Read(//g//**)",
+      "Bash(python3 -)",
+      "Bash(gh auth *)"
+    ]
+  }
+}

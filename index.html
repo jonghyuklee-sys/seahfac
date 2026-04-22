@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>세아씨엠 설비 점검 시스템</title>
+  <link rel="icon" type="image/jpeg" href="logo.jpg">
+  <link rel="apple-touch-icon" href="logo.jpg">
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="세아씨엠">
+  <meta name="theme-color" content="#0f172a">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="logo-container">
+        <div class="logo">
+          <img src="logo.jpg" alt="SeAH">
+          <div class="logo-text">
+            <div style="color: hsl(0, 0%, 81%); font-weight: 600; font-size: 1.1rem; letter-spacing: -0.02em;">세아씨엠</div>
+            <div style="font-size: 1.3rem; color: hsl(216, 89%, 93%); font-weight: 600; margin-top: -2px;">설비 점검 시스템</div>
+          </div>
+        </div>
+        <button class="menu-toggle" id="menuToggle" aria-label="메뉴 열기">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+      </div>
+      <nav class="line-nav" id="lineNav">
+        <button class="nav-btn active" data-line="DASH"> 설비 점검 종합 현황</button>
+        <div style="height:1px; background:rgba(255,255,255,0.08); margin: 0.5rem 0.75rem"></div>
+
+        <div class="nav-category">냉연</div>
+        <button class="nav-btn" data-line="CPL">CPL</button>
+        <button class="nav-btn" data-line="CRM">CRM</button>
+        <button class="nav-btn" data-line="CGL">CGL</button>
+
+        <div class="nav-category">컬러</div>
+        <button class="nav-btn" data-line="1CCL">1CCL</button>
+        <button class="nav-btn" data-line="2CCL">2CCL</button>
+        <button class="nav-btn" data-line="3CCL">3CCL</button>
+
+        <div class="nav-category">기타</div>
+        <button class="nav-btn" data-line="ARP">ARP</button>
+        <button class="nav-btn" data-line="SSCL">SSCL</button>
+
+        <div style="height:1px; background:rgba(255,255,255,0.08); margin: 1rem 0.75rem 0.5rem 0.75rem"></div>
+        <button class="nav-btn" data-line="OBS"> 이상 발견 통합 관리</button>
+        <button class="nav-btn" data-line="PREDICT"> 설비 고장 예측</button>
+      </nav>
+    </aside>
+    <main class="main">
+      <div class="header">
+        <div>
+          <div class="title-row">
+            <h1 id="pageTitle">CPL 설비 점검 현황</h1>
+            <input type="date" id="datePicker">
+          </div>
+          <div class="date-row" id="filterArea">
+            <div class="dropdown" id="ddPart">
+              <button class="dropdown-btn" id="btnPart">파트: 기계 <span class="arrow">▼</span></button>
+              <div class="dropdown-list" id="listPart"></div>
+            </div>
+            <div class="dropdown" id="ddLoc">
+              <button class="dropdown-btn" id="btnLoc">위치: 전체 <span class="arrow">▼</span></button>
+              <div class="dropdown-list" id="listLoc"></div>
+            </div>
+            <div class="dropdown" id="ddFreq">
+              <button class="dropdown-btn" id="btnFreq">주기: 전체 <span class="arrow">▼</span></button>
+              <div class="dropdown-list" id="listFreq"></div>
+            </div>
+            <div class="dropdown" id="ddObsLine" style="display:none">
+              <button class="dropdown-btn" id="btnObsLine">라인: 전체 <span class="arrow">▼</span></button>
+              <div class="dropdown-list" id="listObsLine"></div>
+            </div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-edit" id="editBtn">수정하기</button>
+          <button class="btn btn-primary" id="saveBtn" style="display:none">저장하기</button>
+          <button class="btn" id="exportBtn">엑셀 내보내기</button>
+          <button class="btn" id="importBtn">엑셀 업로드</button>
+          <input type="file" id="excelUpload" style="display:none" accept=".xlsx, .xls">
+        </div>
+      </div>
+      <div id="progressInfo" class="progress-info" style="display:none">
+        <div class="prog-stat">오늘 점검 현황: 전체 <span id="statTotal">0</span> | 점검완료 <span id="statDone"
+            style="color:var(--primary)">0</span> | 미완료 <span id="statPending" style="color:#ef4444">0</span></div>
+        <div class="prog-bar-bg">
+          <div id="progBarFill" class="prog-bar-fill"></div>
+        </div>
+      </div>
+      <div class="scroll-area" id="scrollArea">
+        <table>
+          <colgroup>
+            <col class="col-seq">
+            <col class="col-loc">
+            <col class="col-eq">
+            <col class="col-freq">
+            <col class="col-freq">
+            <col class="col-criteria">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-day">
+            <col class="col-rem">
+            <col class="col-del">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>순번</th>
+              <th>위치</th>
+              <th>설비명</th>
+              <th>주기</th>
+              <th>주차</th>
+              <th>기준</th>
+              <th id="thMon">월</th>
+              <th id="thTue">화</th>
+              <th id="thWed">수</th>
+              <th id="thThu">목</th>
+              <th id="thFri">금</th>
+              <th id="thSat">토</th>
+              <th id="thSun">일</th>
+              <th>비고</th>
+              <th id="delColHead" style="display:none">삭제</th>
+            </tr>
+            <tr class="batch-row" id="batchRow" style="display:none; background:#f1f5f9">
+              <th colspan="5"
+                style="font-size:0.75rem; color:#475569; font-weight:700; background:#f1f5f9; text-align:center">
+                일괄<br>입력 </th>
+              <th>
+                <button class="btn-batch" onclick="bulkNormal('criteria')">양호</button>
+                <button class="btn-batch-clear" onclick="bulkClear('criteria')">비우기</button>
+              </th>
+              <th>
+                <button class="btn-batch" onclick="bulkNormal('mon')">양호</button>
+                <button class="btn-batch-clear" onclick="bulkClear('mon')">비우기</button>
+              </th>
+              <th>
+                <button class="btn-batch" onclick="bulkNormal('tue')">양호</button>
+                <button class="btn-batch-clear" onclick="bulkClear('tue')">비우기</button>
+              </th>
+              <th>
+                <button class="btn-batch" onclick="bulkNormal('wed')">양호</button>
+                <button class="btn-batch-clear" onclick="bulkClear('wed')">비우기</button>
+              </th>
+              <th>
+                <button class="btn-batch" onclick="bulkNormal('thu')">양호</button>
+                <button class="btn-batch-clear" onclick="bulkClear('thu')">비우기</button>
+              </th>
+              <th>
+                <button class="btn-batch" onclick="bulkNormal('fri')">양호</button>
+                <button class="btn-batch-clear" onclick="bulkClear('fri')">비우기</button>
+              </th>
+              <th>
+                <button class="btn-batch" onclick="bulkNormal('sat')">양호</button>
+                <button class="btn-batch-clear" onclick="bulkClear('sat')">비우기</button>
+              </th>
+              <th>
+                <button class="btn-batch" onclick="bulkNormal('sun')">양호</button>
+                <button class="btn-batch-clear" onclick="bulkClear('sun')">비우기</button>
+              </th>
+              <th></th>
+              <th id="batchDelSpacer"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div class="add-row-bar" id="addRowBar">
+          <button class="add-row-btn" id="addRowBtn">+ 점검 항목 추가</button>
+        </div>
+      </div>
+      <div class="obs-section" id="obsSection">
+        <div class="obs-title" id="obsGlobalTitle">이상 발견 개소 및 조치 사항</div>
+        <div class="obs-footer-filters" style="margin-bottom:1rem">
+          <span style="font-weight:600; font-size:0.85rem">조회 기간 설정:</span>
+          <div class="period-btns">
+            <button class="p-btn active" id="pBtnD" onclick="setPeriod('D')">일간</button>
+            <button class="p-btn" id="pBtnW" onclick="setPeriod('W')">주간</button>
+            <button class="p-btn" id="pBtnM" onclick="setPeriod('M')">월간</button>
+            <button class="p-btn" id="pBtnY" onclick="setPeriod('Y')">연간</button>
+            <button class="p-btn" id="pBtnA" onclick="setPeriod('A')">전체</button>
+          </div>
+        </div>
+        <div class="obs-wrap">
+          <table style="table-layout:fixed; width:100%">
+            <colgroup>
+              <col style="width:110px"> <!-- 날짜/No -->
+              <col style="width:80px"> <!-- 라인 -->
+              <col style="width:120px"> <!-- 위치 -->
+              <col style="width:280px"> <!-- 설비명 -->
+              <col style="width:auto"> <!-- 내용 -->
+              <col style="width:100px"> <!-- 확인 -->
+              <col style="width:100px"> <!-- 이상 사진 -->
+              <col style="width:100px"> <!-- 조치 사진 -->
+              <col style="width:60px" class="obs-del-col"> <!-- 삭제 -->
+            </colgroup>
+            <thead>
+              <tr id="obsHeadNorm">
+                <th>No</th>
+                <th>라인</th>
+                <th>위치</th>
+                <th>설비명</th>
+                <th>내용</th>
+                <th>조치 여부</th>
+                <th>이상 사진</th>
+                <th>조치 사진</th>
+                <th class="obs-del-col">삭제</th>
+              </tr>
+              <tr id="obsHeadGlobal" style="display:none">
+                <th>날짜</th>
+                <th>라인</th>
+                <th>위치</th>
+                <th>설비명</th>
+                <th>이상 내용 및 조치 사항</th>
+                <th>조치 여부</th>
+                <th>이상 사진</th>
+                <th>조치 사진</th>
+                <th class="obs-del-col">삭제</th>
+              </tr>
+            </thead>
+            <tbody id="obody"></tbody>
+          </table>
+          <div class="add-row-bar" id="obsAddBar">
+            <button class="add-row-btn" id="obsAddBtn">+ 이상 항목 추가</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Item Modal -->
+  <!-- Photo Modal -->
+  <div class="modal-overlay" id="photoModal">
+    <div class="photo-modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem">
+        <h3 id="photoModalTitle" style="margin-bottom:0">사진 관리</h3>
+        <button class="btn btn-primary" onclick="closePhotoModal()">확인</button>
+      </div>
+      <div class="upload-area" onclick="document.getElementById('photoInput').click()">
+        <div style="font-size:1.5rem; margin-bottom:0.5rem">📁</div>
+        <div style="font-weight:600; color:#334155">여기를 클릭하여 사진 추가</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px">여러 장의 사진을 한 번에 올릴 수 있습니다.</div>
+        <input type="file" id="photoInput" style="display:none" accept="image/*" multiple onchange="uploadPhotos(this)">
+      </div>
+
+      <div id="photoViewer" class="photo-viewer">
+        <div id="uploadOverlay" class="upload-overlay">
+          <div class="spinner"></div>
+          <div id="uploadStatus" style="font-weight:600; color:var(--primary)">업로드 중...</div>
+        </div>
+        <button class="nav-btn prev" id="photoPrev" onclick="prevPhoto()">◀</button>
+        <div id="photoStage" class="photo-stage"></div>
+        <button class="nav-btn next" id="photoNext" onclick="nextPhoto()">▶</button>
+        <div id="photoCounter" class="photo-counter">0 / 0</div>
+      </div>
+      <div id="photoActions" style="text-align:center; padding-top:1rem"></div>
+      <div id="photoSaveNotice"
+        style="display:none; text-align:center; font-size:0.8rem; color:var(--primary); margin-top:0.5rem; font-weight:600">
+        ※ 메인 화면의 [저장하기] 버튼을 눌러야 최종 반영됩니다.</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <h3>점검 항목 추가</h3>
+      <label>위치</label>
+      <input type="text" id="newLoc" placeholder="예: P.O.R, WELDER 등">
+      <label>설비명</label>
+      <input type="text" id="newEquip" placeholder="예: DRUM, SEGMENT 상태점검">
+      <label>점검주기</label>
+      <select id="newFreq">
+        <option value="D">일 (D)</option>
+        <option value="W">주 (W)</option>
+        <option value="M">월 (M)</option>
+      </select>
+      <div class="modal-actions">
+        <button class="btn" id="cancelAddBtn">취소</button>
+        <button class="btn btn-primary" id="confirmAddBtn">추가</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="pwdModal">
+    <div class="modal" style="max-width:400px">
+      <h3>보안 확인</h3>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem">수정 모드 진입을 위해 비밀번호를 입력해주세요.</p>
+      <label>비밀번호</label>
+      <input type="password" id="editPwdInp" style="text-align:center; letter-spacing:0.5rem; font-size:1.2rem" placeholder="****">
+      <div class="modal-actions" style="margin-top:1.5rem">
+        <button class="btn" onclick="closePwdModal()">취소</button>
+        <button class="btn btn-primary" onclick="confirmPwd()">확인</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('Service Worker Registered!', reg))
+          .catch(err => console.error('Service Worker Registration Failed!', err));
+      });
+    }
+  </script>
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+</body>
+
+</html>
