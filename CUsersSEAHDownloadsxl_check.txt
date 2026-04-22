@@ -1,0 +1,18 @@
+Sheets: ['CPL', 'ARP', 'CRM', 'CGL', '1CCL', '2CCL', '3CCL']
+
+--- CGL first 15 rows ---
+('순번', '설비명', '작업 세부사항', '점검주기', '주차', '기준값', '월', '화', '수', '목', '금', '토', '일', '비고', None, None, None, None, None, None, None, None, None, None, None)
+(1, 'Entry Section ( ~ Entry Accumulator )', 'COIL CAR #1~#2 Calibration PX Sensor 고정상태 및 작동상태 점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(2, 'Entry Section ( ~ Entry Accumulator )', 'COIL CAR #1~#2 Lift Encoder 상태 점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(3, 'Entry Section ( ~ Entry Accumulator )', 'COIL CAR #1~#2 Traverse Encoder 상태점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(4, 'Entry Section ( ~ Entry Accumulator )', 'COIL CAR #1~#2 SKID SENSOR 접점 및 고정상태 점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(5, 'Entry Section ( ~ Entry Accumulator )', 'PAY OFF REEL #1~#2 Section PX.PH Sensor 상태 점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(6, 'Entry Section ( ~ Entry Accumulator )', "OS Panel 버튼 & JOG SW & Sel' SW 상태 점검", '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(7, 'Entry Section ( ~ Entry Accumulator )', 'Pinch Roll Length Encoder 커플링 상태 점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(8, 'Entry Section ( ~ Entry Accumulator )', 'Welder Position Sensor 고정상태 점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(9, 'Entry Section ( ~ Entry Accumulator )', 'Welder Strip Photo Sensor 수입작업', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(10, 'Entry Section ( ~ Entry Accumulator )', 'Welder Drive 작동상태 점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(11, 'Entry Section ( ~ Entry Accumulator )', 'Entry Accumulator PX Sensor & Limit & Encoder 상태 점검', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(12, 'Entry Section ( ~ Entry Accumulator )', 'Entry Accumulator 오버 LOAD 및 와이어 센서 점검 고정확인', '주', 1, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(13, 'Process Section ( ~ furnace )', 'RECTIFIER PANEL 전장품 점검', '주', 2, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)
+(14, 'Process Section ( ~ furnace )', 'RECTIFER PANEL 냉각수 LEVEL 상태 점검', '주', 2, '양호', None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None)

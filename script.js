@@ -16,6 +16,25 @@ var customItems = JSON.parse(localStorage.getItem('seah_custom') || '{}');
 var metaOverrides = JSON.parse(localStorage.getItem('seah_meta') || '{}');
 var savedBackup = null, customBackup = null, metaBackup = null; // To revert if not saved
 
+// Migration: clear all electrical metaOverrides (old placeholder data replaced by real Excel import)
+(function() {
+  if (localStorage.getItem('seah_elec_v') === '3') return;
+  var lines = ['CPL','ARP','CRM','CGL','1CCL','2CCL','3CCL','SSCL'];
+  var changed = false;
+  lines.forEach(function(ln) {
+    var ckey = ln + '_electrical';
+    if (metaOverrides[ckey]) {
+      delete metaOverrides[ckey];
+      changed = true;
+    }
+  });
+  if (changed) {
+    localStorage.setItem('seah_meta', JSON.stringify(metaOverrides));
+    window._elecMigrationPending = true;
+  }
+  localStorage.setItem('seah_elec_v', '3');
+})();
+
 var curPhotoKey = null;
 var curPhotoIdx = null;
 var curPhotoDay = null;
@@ -47,6 +66,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const storage = firebase.storage();
+
+if (window._elecMigrationPending) {
+  db.collection('settings').doc('metaOverrides').set(metaOverrides).catch(function(){});
+  window._elecMigrationPending = false;
+}
 
 function init() {
   var t = new Date();
