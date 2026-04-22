@@ -5,7 +5,7 @@ var curLine = isRefresh ? (localStorage.getItem('seah_curLine') || 'DASH') : 'DA
 var curPart = isRefresh ? (localStorage.getItem('seah_curPart') || 'mechanical') : 'mechanical';
 var curLoc = isRefresh ? (localStorage.getItem('seah_curLoc') || 'ALL') : 'ALL';
 var curFreq = isRefresh ? (localStorage.getItem('seah_curFreq') || 'ALL') : 'ALL';
-var curDate = isRefresh ? (localStorage.getItem('seah_curDate') || '') : '';
+var curDate = '';
 var editing = false;
 var curPeriod = isRefresh ? (localStorage.getItem('seah_curPeriod') || 'D') : 'D';
 var curObsLine = isRefresh ? (localStorage.getItem('seah_curObsLine') || 'ALL') : 'ALL';
@@ -925,6 +925,7 @@ function render() {
   var d_today = new Date(curDate + 'T00:00:00');
   var tDayKey = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][d_today.getDay()];
   var curWeekNum = getWeekOfMonth(curDate);
+  var done = 0;
 
   for (var i = 0; i < items.length; i++) {
     var idx = allItems.indexOf(items[i]);
@@ -1495,21 +1496,25 @@ function saveData() {
     }
   }
 
-  // Cloud backup and final save
+  // Update current in-memory state before cloud sync
+  saved[key] = { rows: existingRows, observations: observations };
+
+  // Cloud backup and consistency propagation across the week
   if (curLine !== 'OBS' && curLine !== 'DASH') {
       var wDates = getWeekDates(curDate);
       wDates.forEach(function(wd) {
-        var mk = curLine + '_mechanical_' + wd, ek = curLine + '_electrical_' + wd;
-        if (saved[mk]) db.collection('inspections').doc(mk).set(saved[mk]);
-        if (saved[ek]) db.collection('inspections').doc(ek).set(saved[ek]);
+        var pK = curLine + '_' + curPart + '_' + wd;
+        if (saved[pK]) {
+          saved[pK].rows = JSON.parse(JSON.stringify(existingRows));
+          db.collection('inspections').doc(pK).set(saved[pK]);
+        }
       });
   }
 
-  saved[key] = { rows: existingRows, observations: observations };
   localStorage.setItem('seah_insp', JSON.stringify(saved));
   localStorage.setItem('seah_custom', JSON.stringify(customItems));
   localStorage.setItem('seah_meta', JSON.stringify(metaOverrides));
-  
+
   db.collection('inspections').doc(key).set(saved[key]);
   db.collection('settings').doc('customItems').set(customItems).catch(e => { });
   db.collection('settings').doc('metaOverrides').set(metaOverrides).catch(e => { });
